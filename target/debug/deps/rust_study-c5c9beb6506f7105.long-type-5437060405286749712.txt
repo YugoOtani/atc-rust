@@ -1,0 +1,1 @@
+Map<std::ops::Range<usize>, [closure@/Users/yugootani/.cargo/registry/src/index.crates.io-6f17d22bba15001f/proconio-0.4.5/src/lib.rs:697:18: 697:21]>
