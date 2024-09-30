@@ -38,9 +38,6 @@ macro_rules! p {
         }
     };
 }
-fn main() {
-    println!("1")
-}
 
 /// types
 #[allow(dead_code)]

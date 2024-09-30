@@ -1,6 +1,8 @@
 fn util_rs() {
     // maxのindex
     let mx = a.iter().enumerate().max_by_key(|x| x.1);
+
+    // format
     println!("{:b}", 1234); // => 10011010010
     println!("{:o}", 1234); // => 2322
     println!("{:x}", 1234); // => 4d2
