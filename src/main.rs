@@ -38,6 +38,7 @@ macro_rules! p {
         }
     };
 }
+fn main() {}
 
 /// types
 #[allow(dead_code)]
