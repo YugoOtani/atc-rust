@@ -2,6 +2,7 @@ struct Cmb {
     md: usize,
     fact: Vec<usize>,
 }
+#[allow(dead_code)]
 impl Cmb {
     fn new(n: usize, md: usize) -> Self {
         let mut v = vec![0; n + 1];

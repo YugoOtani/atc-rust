@@ -1,9 +1,13 @@
-struct Acm2<T: Add + Sub + Default> {
+#[allow(dead_code)]
+type T = i64;
+#[allow(dead_code)]
+struct Acm2 {
     acm: Vec<Vec<T>>,
 }
-impl<T: Add + Sub + Default> Acm2<T> {
+#[allow(dead_code)]
+impl Acm2 {
     fn new(h: usize, w: usize, v: &Vec<Vec<T>>) -> Self {
-        let mut acm = vec![vec![0; w + 1]; h + 1];
+        let mut acm = vec![vec![T::default(); w + 1]; h + 1];
         for i in 0..h {
             for j in 0..w {
                 acm[i + 1][j + 1] = acm[i + 1][j] + v[i][j];
@@ -17,7 +21,7 @@ impl<T: Add + Sub + Default> Acm2<T> {
         Self { acm }
     }
     /// x,y両方含む
-    fn sum(&self, x: (usize, usize), y: (usize, usize)) -> Int {
+    fn sum(&self, x: (usize, usize), y: (usize, usize)) -> T {
         // x.0, x.1 ... x.0, y.1
         // ..
         // y.0, x.1 ..  y.0, y.1

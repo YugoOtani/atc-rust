@@ -1,3 +1,4 @@
+use std::fmt::{Debug, Display};
 #[allow(dead_code)]
 type F<T> = Box<dyn Fn(T, T) -> T>;
 #[allow(dead_code)]

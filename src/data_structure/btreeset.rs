@@ -1,16 +1,17 @@
-struct BinaryTree<T>
+use std::fmt::Debug;
+struct OSetEntity<T>
 where
     T: Ord,
 {
-    l: TPtr<T>,
-    r: TPtr<T>,
+    l: OrderedSet<T>,
+    r: OrderedSet<T>,
     v: T,
     h: usize,
     sz: usize,
 }
-struct TPtr<T: Ord>(Option<Box<BinaryTree<T>>>);
+struct OrderedSet<T: Ord>(Option<Box<OSetEntity<T>>>);
 
-impl<T: Ord> TPtr<T> {
+impl<T: Ord> OrderedSet<T> {
     #[allow(dead_code)]
     fn is_null(&self) -> bool {
         matches!(&self.0, None)
@@ -50,7 +51,7 @@ impl<T: Ord> TPtr<T> {
     }
     #[allow(dead_code)]
     fn h_check(&self) -> bool {
-        fn helper<T: Ord>(t: &TPtr<T>) -> Option<usize> {
+        fn helper<T: Ord>(t: &OrderedSet<T>) -> Option<usize> {
             match &t.0 {
                 None => Some(0),
                 Some(t) => match (helper(&t.l), helper(&t.r)) {
@@ -63,7 +64,7 @@ impl<T: Ord> TPtr<T> {
     }
     #[allow(dead_code)]
     fn sz_check(&self) -> bool {
-        fn helper<T: Ord>(t: &TPtr<T>) -> Option<usize> {
+        fn helper<T: Ord>(t: &OrderedSet<T>) -> Option<usize> {
             match &t.0 {
                 None => Some(0),
                 Some(t) => match (helper(&t.l), helper(&t.r)) {
@@ -76,7 +77,7 @@ impl<T: Ord> TPtr<T> {
     }
     #[allow(dead_code)]
     fn bal_check(&self) -> bool {
-        fn helper<T: Ord>(t: &TPtr<T>) -> Option<usize> {
+        fn helper<T: Ord>(t: &OrderedSet<T>) -> Option<usize> {
             match &t.0 {
                 None => Some(0),
                 Some(t) => match (helper(&t.l), helper(&t.r)) {
@@ -91,15 +92,8 @@ impl<T: Ord> TPtr<T> {
     fn create(v: T, l: Self, r: Self) -> Self {
         let h = usize::max(l.h(), r.h()) + 1;
         let sz = l.sz() + r.sz() + 1;
-        let ret = BinaryTree { l, r, v, h, sz };
+        let ret = OSetEntity { l, r, v, h, sz };
         Self(Some(Box::new(ret)))
-    }
-    #[allow(dead_code)]
-    fn size(&self) -> usize {
-        match &self.0 {
-            Some(t) => 1 + t.l.size() + t.r.size(),
-            None => 0,
-        }
     }
     #[allow(dead_code)]
     fn bal(v: T, l: Self, r: Self) -> Self {
@@ -109,7 +103,7 @@ impl<T: Ord> TPtr<T> {
         }
         if lh < rh {
             // h(r) - h(l) = 2
-            let BinaryTree {
+            let OSetEntity {
                 l: rl,
                 r: rr,
                 v: rv,
@@ -118,7 +112,7 @@ impl<T: Ord> TPtr<T> {
             return if rr.h() >= rl.h() {
                 Self::create(rv, Self::create(v, l, rl), rr)
             } else {
-                let BinaryTree {
+                let OSetEntity {
                     l: rll,
                     r: rlr,
                     v: rlv,
@@ -128,7 +122,7 @@ impl<T: Ord> TPtr<T> {
             };
         } else {
             // h(l)-h(r)=2
-            let BinaryTree {
+            let OSetEntity {
                 l: ll,
                 r: lr,
                 v: lv,
@@ -137,7 +131,7 @@ impl<T: Ord> TPtr<T> {
             return if ll.h() >= lr.h() {
                 Self::create(lv, ll, Self::create(v, lr, r))
             } else {
-                let BinaryTree {
+                let OSetEntity {
                     l: lrl,
                     r: lrr,
                     v: lrv,
@@ -162,6 +156,7 @@ impl<T: Ord> TPtr<T> {
             }
         }
     }
+
     #[allow(dead_code)]
     fn insert(self, t: T) -> Self {
         match self.0 {
@@ -170,7 +165,7 @@ impl<T: Ord> TPtr<T> {
                 if &tree.v == &t {
                     return Self(Some(tree));
                 }
-                let BinaryTree { l, r, v, .. } = *tree;
+                let OSetEntity { l, r, v, .. } = *tree;
                 if &v < &t {
                     Self::bal(v, l, r.insert(t))
                 } else {
@@ -216,7 +211,7 @@ impl<T: Ord> TPtr<T> {
     fn remove_min(self) -> (Self, Option<T>) {
         match self.0 {
             Some(t) => {
-                let BinaryTree { l, r, v, .. } = *t;
+                let OSetEntity { l, r, v, .. } = *t;
                 if l.is_null() {
                     (r, Some(v))
                 } else {
@@ -243,7 +238,7 @@ impl<T: Ord> TPtr<T> {
         if self.is_null() {
             (self, false)
         } else {
-            let BinaryTree { l, r, v, .. } = *self.0.unwrap();
+            let OSetEntity { l, r, v, .. } = *self.0.unwrap();
             if &v == t {
                 (Self::merge(l, r), true)
             } else if &v < t {
@@ -265,6 +260,21 @@ impl<T: Ord> TPtr<T> {
         b
     }
     #[allow(dead_code)]
+    fn entry<'a>(&'a mut self, t: &T) -> Option<&'a mut T> {
+        match &mut self.0 {
+            None => None,
+            Some(tree) => {
+                if &tree.v == t {
+                    Some(&mut tree.v)
+                } else if &tree.v < t {
+                    tree.r.entry(t)
+                } else {
+                    tree.l.entry(t)
+                }
+            }
+        }
+    }
+    #[allow(dead_code)]
     fn traverse(&self, f: &impl Fn(&T) -> ()) {
         match &self.0 {
             None => (),
@@ -272,6 +282,28 @@ impl<T: Ord> TPtr<T> {
                 t.l.traverse(f);
                 f(&t.v);
                 t.r.traverse(f);
+            }
+        }
+    }
+    /// elem = [1, 2, 5, 8, 11]のとき
+    /// elem.index_of(3) -> Err(2)
+    /// elem.index_of(2) -> Ok(1)
+    #[allow(dead_code)]
+    fn index_of(&self, v: &T) -> Result<usize, usize> {
+        match &self.0 {
+            None => Err(0),
+            Some(t) => {
+                if &t.v == v {
+                    Ok(t.l.sz())
+                } else if v < &t.v {
+                    t.l.index_of(v)
+                } else {
+                    // v > t.v
+                    match t.r.index_of(v) {
+                        Ok(i) => Ok(t.l.sz() + 1 + i),
+                        Err(i) => Err(t.l.sz() + 1 + i),
+                    }
+                }
             }
         }
     }
@@ -315,27 +347,21 @@ impl<T: Ord> TPtr<T> {
             }
         }
     }
+    #[allow(dead_code)]
+    fn remove_min_mut(&mut self) -> Option<T> {
+        let mut tmp = Self::empty();
+        std::mem::swap(self, &mut tmp);
+        let (ret, v) = tmp.remove_min();
+        *self = ret;
+        v
+    }
 }
-impl<T: Ord + Debug> Debug for TPtr<T> {
+impl<T: Ord + Debug> Debug for OrderedSet<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        /*fn dfs<T: Ord + Debug>(
-            t: &TPtr<T>,
+        fn dfs<T: Ord + Debug>(
+            t: &OrderedSet<T>,
             f: &mut std::fmt::Formatter<'_>,
-            indent: usize,
         ) -> std::fmt::Result {
-            for _ in 0..indent {
-                f.write_str("--")?;
-            }
-            match &t.0 {
-                Some(t) => {
-                    writeln!(f, "{:?}", &t.v)?;
-                    dfs(&t.l, f, indent + 1)?;
-                    dfs(&t.r, f, indent + 1)
-                }
-                None => writeln!(f, "()"),
-            }
-        }*/
-        fn dfs<T: Ord + Debug>(t: &TPtr<T>, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             match &t.0 {
                 None => write!(f, "."),
                 Some(t) => {
